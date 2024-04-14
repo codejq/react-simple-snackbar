@@ -14,7 +14,8 @@ export const useSnackbar = ({
     position = defaultPosition
   }
 
-  function open(text = '', duration = defaultDuration) {
+  function open(text = '', duration = defaultDuration , backgroundColor=null) {
+    if(backgroundColor){style.backgroundColor = backgroundColor;}
     openSnackbar(text, duration, position, style, closeStyle)
   }
 
