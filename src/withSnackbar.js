@@ -6,6 +6,9 @@ export function withSnackbar(
   WrappedComponent,
   { position = defaultPosition, style = {}, closeStyle = {} } = {}
 ) {
+  // Resolve position at HoC creation time, not per-call, to avoid mutation
+  const resolvedPosition = positions.includes(position) ? position : defaultPosition
+
   return class extends React.Component {
     static contextType = SnackbarContext
 
@@ -15,15 +18,11 @@ export function withSnackbar(
       this.close = this.close.bind(this)
     }
 
-    open(text = '', duration = defaultDuration) {
+    open(text = '', duration = defaultDuration, backgroundColor = null) {
       const { openSnackbar } = this.context
-
-      // If no correct position is passed, 'bottom-center' is set
-      if (!positions.includes(position)) {
-        position = defaultPosition
-      }
-
-      openSnackbar(text, duration, position, style, closeStyle)
+      // Spread into a new object instead of mutating the options style
+      const resolvedStyle = backgroundColor ? { ...style, backgroundColor } : style
+      openSnackbar(text, duration, resolvedPosition, resolvedStyle, closeStyle)
     }
 
     close() {

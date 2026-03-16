@@ -14,13 +14,13 @@
     />
   </a>
   <a
-    href="https://travis-ci.org/evandromacedo/react-simple-snackbar"
-    title="Build Status"
+    href="https://github.com/evandromacedo/react-simple-snackbar/actions/workflows/npm-publish.yml"
+    title="CI Status"
     target="blank"
   >
     <img
-      src="https://travis-ci.org/evandromacedo/react-simple-snackbar.svg?branch=master"
-      alt="Build Status"
+      src="https://github.com/evandromacedo/react-simple-snackbar/actions/workflows/npm-publish.yml/badge.svg"
+      alt="CI Status"
     />
   </a>
   <a
@@ -61,15 +61,19 @@ You can check a quick demo [here](https://evandromacedo.github.io/react-simple-s
 
 ## Getting Started
 
+### Requirements
+
+Requires **React 16.8 or later**. Compatible with React 16.8 through React 19.
+
 ### Installation
 
-```
+```sh
 npm install --save react-simple-snackbar
 ```
 
 or
 
-```
+```sh
 yarn add react-simple-snackbar
 ```
 
@@ -150,7 +154,7 @@ export default withSnackbar(SomeChildComponent)
 
 ### Methods
 
-These methods are are returned from `useSnackbar()` hook in array destructuring syntax:
+These methods are returned from `useSnackbar()` hook in array destructuring syntax:
 
 ```js noLines
 const [openSnackbar, closeSnackbar] = useSnackbar()
@@ -165,27 +169,53 @@ Or added as additional props on components wrapped in `withSnackbar()`:
 const { openSnackbar, closeSnackbar } = this.props
 ```
 
-#### `openSnackbar(node [, duration])`
+#### `openSnackbar(node [, duration [, backgroundColor]])`
 
 - **`node`**: the node you want to show into the Snackbar. It can be just `"Some string like showed on Basic Usage"`, or `<p>Some element you would <strong>like</strong> to show</p>`.
 
-- **`duration`**: a number in milliseconds to set the duration of the Snackbar. The default value is `5000`.
+- **`duration`**: a number in milliseconds to set the duration of the Snackbar. The default value is `8000`.
+
+- **`backgroundColor`**: an optional CSS color string to override the Snackbar's background color for this specific call. Equivalent to passing `style: { backgroundColor: '...' }` in the options object, but applied per-call. Takes precedence over the `style.backgroundColor` option.
+
+```jsx
+// Basic
+openSnackbar('Hello!')
+
+// With custom duration
+openSnackbar('Hello!', 3000)
+
+// With custom duration and background color
+openSnackbar('Error occurred', 5000, '#e53935')
+```
 
 #### `closeSnackbar()`
 
-- This method is used if you want to close the Snackbar programmatically. It doesn't receive any params.
+This method is used if you want to close the Snackbar programmatically. It doesn't receive any params.
 
 ### Options
 
-You can pass an options object to customize your Snackbar. This object can be passed either in `useSnackbar([options])` or as second argument of `withSnackbar(Component [, options])`. It accepts three options:
+You can pass an options object to customize your Snackbar. This object can be passed either in `useSnackbar([options])` or as the second argument of `withSnackbar(Component [, options])`.
 
-- **`position`**: a custom position for your Snackbar. The default value is `bottom-center`, and the possible values are `top-left`, `top-center`, `top-right`, `bottom-left`, `bottom-center` and `bottom-right`.
+#### Position
 
-- **`style`**: a [style object](https://reactjs.org/docs/dom-elements.html#style) with `camelCased` properties and string values. These styles are applied to the Snackbar itself.
+- **`position`**: a custom position for your Snackbar. The default value is `bottom-center`.
+
+| Value | Description |
+| --- | --- |
+| `top-left` | Top of viewport, left-aligned |
+| `top-center` | Top of viewport, centered |
+| `top-right` | Top of viewport, right-aligned |
+| `bottom-left` | Bottom of viewport, left-aligned |
+| `bottom-center` | Bottom of viewport, centered **(default)** |
+| `bottom-right` | Bottom of viewport, right-aligned |
+
+#### Styling
+
+- **`style`**: a [style object](https://reactjs.org/docs/dom-elements.html#style) with `camelCased` properties and string values. These styles are applied to the Snackbar itself. Use `style.backgroundColor` to set a global background color for all calls.
 
 - **`closeStyle`**: same as above, but the styles are applied to the close button. You can use font properties to style the `X` icon.
 
-For example:
+#### Full Example
 
 ```jsx noLines
 const options = {
@@ -205,7 +235,12 @@ const options = {
 }
 
 // Usage with hooks
-useSnackbar(options)
+const [openSnackbar] = useSnackbar(options)
+openSnackbar('Styled message!')
+
+// Override background color for a specific call
+openSnackbar('Error!', 5000, '#e53935')
+
 // Usage with HoC
 withSnackbar(Component, options)
 ```
@@ -214,7 +249,7 @@ withSnackbar(Component, options)
 
 > The snackbar itself is [already tested](https://github.com/evandromacedo/react-simple-snackbar/tree/master/src/__tests__) and you don't have to worry about it.
 
-To test components that use Snackbar functionalities, there are some approaches as described bellow. This examples makes use of [Jest](https://jestjs.io/) and [Enzyme](https://airbnb.io/enzyme/) for testing, but you can use whatever you want.
+To test components that use Snackbar functionalities, there are some approaches as described below. These examples use [Jest](https://jestjs.io/) and [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/).
 
 ### Testing components that use `useSnackbar()` hook
 
@@ -224,7 +259,7 @@ You can mock the implementation of `useSnackbar` to return an array containing `
 ```jsx
 // Component.test.js
 import React from 'react'
-import { shallow } from 'enzyme'
+import { render, fireEvent } from '@testing-library/react'
 import * as Snackbar from 'react-simple-snackbar'
 import Component from './Component'
 
@@ -234,11 +269,11 @@ const closeSnackbarMock = jest.fn()
 jest.spyOn(Snackbar, 'useSnackbar').mockImplementation(() => [openSnackbarMock, closeSnackbarMock])
 
 it('can test the openSnackbar and closeSnackbar functions', () => {
-  const wrapper = shallow(<Component />)
+  const { getByRole } = render(<Component />)
 
   // Simulates click on some buttons that opens and closes the Snackbar
-  wrapper.find('button.open').simulate('click')
-  wrapper.find('button.close').simulate('click')
+  fireEvent.click(getByRole('button', { name: /open/i }))
+  fireEvent.click(getByRole('button', { name: /close/i }))
 
   // Some examples of how you can test the mocks
   expect(openSnackbarMock).toHaveBeenCalled()
@@ -270,19 +305,19 @@ So you can get the component as a named import, then mock the `openSnackbar` and
 ```jsx
 // Component.test.js
 import React from 'react'
-import { shallow } from 'enzyme'
+import { render, fireEvent } from '@testing-library/react'
 import { Component } from './Component'
 
 it('can test the openSnackbar and closeSnackbar functions', () => {
   const openSnackbarMock = jest.fn()
   const closeSnackbarMock = jest.fn()
-  const wrapper = shallow(
+  const { getByRole } = render(
     <Component openSnackbar={openSnackbarMock} closeSnackbar={closeSnackbarMock} />
   )
 
   // Simulates click on some buttons that opens and closes the Snackbar
-  wrapper.find('button.open').simulate('click')
-  wrapper.find('button.close').simulate('click')
+  fireEvent.click(getByRole('button', { name: /open/i }))
+  fireEvent.click(getByRole('button', { name: /close/i }))
 
   // Some examples of how you can test the mocks
   expect(openSnackbarMock).toHaveBeenCalled()

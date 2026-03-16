@@ -1,10 +1,10 @@
-import React, { createContext, useState } from 'react'
+import React, { createContext, useCallback, useMemo, useReducer, useRef, useState } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import styles from './Snackbar.css'
 
 // Snackbar default values
 export const defaultPosition = 'bottom-center'
-export const defaultDuration = 5000
+export const defaultDuration = 8000
 export const defaultInterval = 250
 export const positions = [
   'top-left',
@@ -18,90 +18,112 @@ export const positions = [
 // Context used by the hook useSnackbar() and HoC withSnackbar()
 export const SnackbarContext = createContext(null)
 
-export default function Snackbar({ children }) {
-  // Current open state
-  const [open, setOpen] = useState(false)
-  // Current timeout ID
-  const [timeoutId, setTimeoutId] = useState(null)
-  // Snackbar's text
-  const [text, setText] = useState('')
-  // Snackbar's duration
-  const [duration, setDuration] = useState(defaultDuration)
-  // Snackbar's position
-  const [position, setPosition] = useState(defaultPosition)
-  // Custom styles for the snackbar itself
-  const [customStyles, setCustomStyles] = useState({})
-  // Custom styles for the close button
-  const [closeCustomStyles, setCloseCustomStyles] = useState({})
+const initialSnackState = {
+  text: '',
+  duration: defaultDuration,
+  position: defaultPosition,
+  customStyles: {},
+  closeCustomStyles: {},
+}
 
-  const triggerSnackbar = (text, duration, position, style, closeStyle) => {
-    setText(text)
-    setDuration(duration)
-    setPosition(position)
-    setCustomStyles(style)
-    setCloseCustomStyles(closeStyle)
-    setOpen(true)
+function snackbarReducer(state, action) {
+  switch (action.type) {
+    case 'OPEN':
+      return {
+        ...state,
+        text: action.text,
+        duration: action.duration,
+        position: action.position,
+        customStyles: action.customStyles,
+        closeCustomStyles: action.closeCustomStyles,
+      }
+    default:
+      return state
   }
+}
+
+export default function SnackbarProvider({ children }) {
+  const [open, setOpen] = useState(false)
+  const [snackState, dispatch] = useReducer(snackbarReducer, initialSnackState)
+
+  // Refs that don't trigger re-renders
+  const timeoutIdRef = useRef(null)
+  const nodeRef = useRef(null)
+
+  // Mirror open in a ref so openSnackbar can read it without a stale closure.
+  // openRef.current is updated on every render from state.
+  const openRef = useRef(false)
+  openRef.current = open
+
+  const closeSnackbar = useCallback(() => {
+    setOpen(false)
+  }, [])
+
+  const triggerSnackbar = useCallback((text, duration, position, customStyles, closeCustomStyles) => {
+    dispatch({ type: 'OPEN', text, duration, position, customStyles, closeCustomStyles })
+    setOpen(true)
+  }, [])
 
   // Manages all the snackbar's opening process
-  const openSnackbar = (text, duration, position, style, closeStyle) => {
-    // Closes the snackbar if it is already open
-    if (open === true) {
+  const openSnackbar = useCallback((text, duration, position, customStyles, closeCustomStyles) => {
+    if (openRef.current === true) {
+      // Dismiss the current snackbar then reopen after the exit animation interval
       setOpen(false)
       setTimeout(() => {
-        triggerSnackbar(text, duration, position, style, closeStyle)
+        triggerSnackbar(text, duration, position, customStyles, closeCustomStyles)
       }, defaultInterval)
     } else {
-      triggerSnackbar(text, duration, position, style, closeStyle)
+      triggerSnackbar(text, duration, position, customStyles, closeCustomStyles)
     }
-  }
+  }, [triggerSnackbar])
 
-  // Closes the snackbar just by setting the "open" state to false
-  const closeSnackbar = () => {
-    setOpen(false)
-  }
+  // Memoize context value so consumers only re-render when function references change
+  const contextValue = useMemo(
+    () => ({ openSnackbar, closeSnackbar }),
+    [openSnackbar, closeSnackbar]
+  )
 
-  // Returns the Provider that must wrap the application
   return (
-    <SnackbarContext.Provider value={{ openSnackbar, closeSnackbar }}>
+    <SnackbarContext.Provider value={contextValue}>
       {children}
 
-      {/* Renders Snackbar on the end of the page */}
+      {/* Renders Snackbar at the end of the page */}
       <CSSTransition
+        nodeRef={nodeRef}
         in={open}
         timeout={150}
         mountOnEnter
         unmountOnExit
-        // Sets timeout to close the snackbar
+        // Sets timeout to close the snackbar after its duration
         onEnter={() => {
-          clearTimeout(timeoutId)
-          setTimeoutId(setTimeout(() => setOpen(false), duration))
+          clearTimeout(timeoutIdRef.current)
+          timeoutIdRef.current = setTimeout(closeSnackbar, snackState.duration)
         }}
-        // Sets custom classNames based on "position"
+        // Sets custom classNames based on position
         className={`${styles['snackbar-wrapper']} ${
-          styles[`snackbar-wrapper-${position}`]
+          styles[`snackbar-wrapper-${snackState.position}`]
         }`}
         classNames={{
-          enter: `${styles['snackbar-enter']} ${styles[`snackbar-enter-${position}`]}`,
+          enter: `${styles['snackbar-enter']} ${styles[`snackbar-enter-${snackState.position}`]}`,
           enterActive: `${styles['snackbar-enter-active']} ${
-            styles[`snackbar-enter-active-${position}`]
+            styles[`snackbar-enter-active-${snackState.position}`]
           }`,
           exitActive: `${styles['snackbar-exit-active']} ${
-            styles[`snackbar-exit-active-${position}`]
+            styles[`snackbar-exit-active-${snackState.position}`]
           }`,
         }}
       >
-        {/* This div will be rendered with CSSTransition classNames */}
-        <div>
-          <div className={styles.snackbar} style={customStyles}>
+        {/* nodeRef must be on the root DOM element that CSSTransition manages */}
+        <div ref={nodeRef}>
+          <div className={styles.snackbar} style={snackState.customStyles}>
             {/* Snackbar's text */}
-            <div className={styles.snackbar__text}>{text}</div>
+            <div className={styles.snackbar__text}>{snackState.text}</div>
 
             {/* Snackbar's close button */}
             <button
               onClick={closeSnackbar}
               className={styles.snackbar__close}
-              style={closeCustomStyles}
+              style={snackState.closeCustomStyles}
             >
               <CloseIcon />
             </button>

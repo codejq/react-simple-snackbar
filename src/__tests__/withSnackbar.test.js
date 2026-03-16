@@ -1,8 +1,7 @@
 import React from 'react'
-import { act } from 'react-dom/test-utils'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import SnackbarProvider, { withSnackbar } from '..'
 import { defaultPosition, defaultDuration, defaultInterval } from '../Snackbar'
-import { mount } from 'enzyme'
 
 class ComponentMock extends React.Component {
   render() {
@@ -10,10 +9,10 @@ class ComponentMock extends React.Component {
 
     return (
       <div>
-        <button data-test="open" onClick={() => openSnackbar(text, duration)}>
+        <button data-testid="open" onClick={() => openSnackbar(text, duration)}>
           Open
         </button>
-        <button data-test="close" onClick={() => closeSnackbar()}>
+        <button data-testid="close" onClick={() => closeSnackbar()}>
           Close
         </button>
       </div>
@@ -21,13 +20,13 @@ class ComponentMock extends React.Component {
   }
 }
 
-const mountWithProvider = ({
+const renderWithProvider = ({
   text = '',
   duration = undefined,
   snackbarProperties = {},
 } = {}) => {
   const Component = withSnackbar(ComponentMock, snackbarProperties)
-  return mount(
+  return render(
     <SnackbarProvider>
       <Component text={text} duration={duration} />
     </SnackbarProvider>
@@ -35,102 +34,75 @@ const mountWithProvider = ({
 }
 
 describe('withSnackbar()', () => {
-  // Reset fake timers on each test
   beforeEach(() => {
     jest.useFakeTimers()
   })
 
-  it('should render with default values when nothing is passed to neither withSnackbar() nor open()', () => {
-    const wrapper = mountWithProvider()
-    const Transition = wrapper.find('Transition')
+  afterEach(() => {
+    jest.runOnlyPendingTimers()
+    jest.useRealTimers()
+  })
 
-    // Position bottom-center
-    expect(Transition.props().className).toEqual(
-      `snackbar-wrapper snackbar-wrapper-${defaultPosition}`
-    )
+  it('should render with default values when nothing is passed to neither withSnackbar() nor open()', () => {
+    renderWithProvider()
 
     // No snackbar rendered before open()
-    expect(Transition.children().length).toBe(0)
+    expect(document.querySelector('.snackbar')).toBeNull()
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
+    fireEvent.click(screen.getByTestId('open'))
 
-    // setTimeout called with 5000ms delay
+    // setTimeout called with defaultDuration ms delay
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), defaultDuration)
 
     // Open snackbar with '' text
-    const SnackbarText = wrapper.find('.snackbar__text')
-    expect(SnackbarText.text()).toEqual('')
+    expect(document.querySelector('.snackbar__text').textContent).toEqual('')
+
+    // Position bottom-center on wrapper
+    expect(document.querySelector('.snackbar-wrapper').className).toContain(
+      `snackbar-wrapper-${defaultPosition}`
+    )
 
     // No styles for snackbar and close button
-    const Snackbar = wrapper.find('.snackbar')
-    expect(Snackbar.props().style).toEqual({})
-    const SnackbarClose = wrapper.find('.snackbar__close')
-    expect(SnackbarClose.props().style).toEqual({})
+    expect(document.querySelector('.snackbar').getAttribute('style')).toBeNull()
+    expect(document.querySelector('.snackbar__close').getAttribute('style')).toBeNull()
   })
 
   it('should render snackbar with text', () => {
-    // Mount with text
     const randomText = 'Some text to be rendered!'
-    const wrapper = mountWithProvider({ text: randomText })
+    renderWithProvider({ text: randomText })
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
+    fireEvent.click(screen.getByTestId('open'))
 
-    // Open snackbar with "Some text to be rendered!"
-    const SnackbarText = wrapper.find('.snackbar__text')
-    expect(SnackbarText.text()).toEqual(randomText)
+    expect(document.querySelector('.snackbar__text').textContent).toEqual(randomText)
   })
 
   it('should set a custom duration on open()', () => {
-    // Mount with duration
-    const wrapper = mountWithProvider({ duration: 8000 })
+    renderWithProvider({ duration: 3000 })
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
+    fireEvent.click(screen.getByTestId('open'))
 
-    // setTimeout called with 8000ms delay
-    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 8000)
+    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 3000)
   })
 
   it('should set position className when passed correctly', () => {
-    const snackbarProperties = {
-      position: 'top-left',
-    }
+    const snackbarProperties = { position: 'top-left' }
+    renderWithProvider({ snackbarProperties })
 
-    // Mount with snackbarProperties
-    const wrapper = mountWithProvider({ snackbarProperties })
+    fireEvent.click(screen.getByTestId('open'))
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
-
-    // Position top-left
-    const Transition = wrapper.find('Transition')
-    expect(Transition.props().className).toEqual(
-      'snackbar-wrapper snackbar-wrapper-top-left'
+    expect(document.querySelector('.snackbar-wrapper').className).toContain(
+      'snackbar-wrapper-top-left'
     )
   })
 
   it('should render default position className when passed incorrectly', () => {
-    const snackbarProperties = {
-      position: 'some-position-that-doesnt-exist',
-    }
+    const snackbarProperties = { position: 'some-position-that-doesnt-exist' }
+    renderWithProvider({ snackbarProperties })
 
-    // Mount with snackbarProperties
-    const wrapper = mountWithProvider({ snackbarProperties })
+    fireEvent.click(screen.getByTestId('open'))
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
-
-    // Position bottom-center
-    const Transition = wrapper.find('Transition')
-    expect(Transition.props().className).toEqual(
-      `snackbar-wrapper snackbar-wrapper-${defaultPosition}`
+    expect(document.querySelector('.snackbar-wrapper').className).toContain(
+      `snackbar-wrapper-${defaultPosition}`
     )
   })
 
@@ -146,96 +118,117 @@ describe('withSnackbar()', () => {
         fontSize: '18px',
       },
     }
+    renderWithProvider({ snackbarProperties })
 
-    // Mount with snackbarProperties
-    const wrapper = mountWithProvider({ snackbarProperties })
+    fireEvent.click(screen.getByTestId('open'))
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
+    expect(document.querySelector('.snackbar')).toHaveStyle(snackbarProperties.style)
+    expect(document.querySelector('.snackbar__close')).toHaveStyle(snackbarProperties.closeStyle)
+  })
 
-    // Styles props for snackbar and close button
-    const Snackbar = wrapper.find('.snackbar')
-    expect(Snackbar.props().style).toEqual(snackbarProperties.style)
-    const SnackbarClose = wrapper.find('.snackbar__close')
-    expect(SnackbarClose.props().style).toEqual(snackbarProperties.closeStyle)
+  it('should set backgroundColor when passed as third argument to open()', () => {
+    class ComponentWithBg extends React.Component {
+      render() {
+        const { openSnackbar } = this.props
+        return (
+          <button data-testid="open" onClick={() => openSnackbar('hello', defaultDuration, 'red')}>
+            Open
+          </button>
+        )
+      }
+    }
+    const Wrapped = withSnackbar(ComponentWithBg)
+    render(
+      <SnackbarProvider>
+        <Wrapped />
+      </SnackbarProvider>
+    )
+
+    fireEvent.click(screen.getByTestId('open'))
+
+    expect(document.querySelector('.snackbar')).toHaveStyle({ backgroundColor: 'red' })
+  })
+
+  it('should not mutate the style object when backgroundColor is passed', () => {
+    const originalStyle = { color: 'white' }
+
+    class ComponentWithBg extends React.Component {
+      render() {
+        const { openSnackbar } = this.props
+        return (
+          <button data-testid="open" onClick={() => openSnackbar('hello', defaultDuration, 'blue')}>
+            Open
+          </button>
+        )
+      }
+    }
+    const Wrapped = withSnackbar(ComponentWithBg, { style: originalStyle })
+    render(
+      <SnackbarProvider>
+        <Wrapped />
+      </SnackbarProvider>
+    )
+
+    fireEvent.click(screen.getByTestId('open'))
+
+    // Original style object must not be mutated
+    expect(originalStyle).toEqual({ color: 'white' })
   })
 
   it('should close snackbar with close()', () => {
-    const wrapper = mountWithProvider()
+    renderWithProvider()
 
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
+    fireEvent.click(screen.getByTestId('open'))
+    expect(document.querySelector('.snackbar')).not.toBeNull()
 
-    // Simulates close()
-    Component.find('[data-test="close"]').simulate('click')
+    fireEvent.click(screen.getByTestId('close'))
 
-    // "in" prop has to be false
-    const Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(false)
-  })
-
-  it('should open and close snackbar after duration end', () => {
-    const wrapper = mountWithProvider()
-
-    // Simulates open()
-    const Component = wrapper.find(ComponentMock)
-    Component.find('[data-test="open"]').simulate('click')
-
-    // "in" prop has to be true
-    let Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(true)
-
-    // Advance time by 5 seconds
+    // Advance past CSSTransition exit animation (150ms timeout)
     act(() => {
-      jest.advanceTimersByTime(defaultDuration)
-      wrapper.update()
+      jest.advanceTimersByTime(200)
     })
 
-    // "in" prop has to be false
-    Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(false)
+    expect(document.querySelector('.snackbar')).toBeNull()
+  })
+
+  it('should open and close snackbar after duration ends', () => {
+    renderWithProvider()
+
+    fireEvent.click(screen.getByTestId('open'))
+    expect(document.querySelector('.snackbar')).not.toBeNull()
+
+    // Advance past duration + exit animation
+    act(() => {
+      jest.advanceTimersByTime(defaultDuration + 200)
+    })
+
+    expect(document.querySelector('.snackbar')).toBeNull()
   })
 
   it('should remove the current snackbar and apply a new one when open() is called again before duration ends', () => {
-    const wrapper = mountWithProvider()
+    renderWithProvider()
 
-    // Simulates first open()
-    const Component = wrapper.find(ComponentMock)
-    const OpenButton = Component.find('[data-test="open"]')
+    const openButton = screen.getByTestId('open')
 
-    OpenButton.simulate('click')
+    fireEvent.click(openButton)
+    expect(document.querySelector('.snackbar')).not.toBeNull()
 
-    // "in" prop has to be true
-    let Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(true)
+    // Second open while still showing
+    fireEvent.click(openButton)
 
-    // Simulates second open()
-    OpenButton.simulate('click')
-
-    // "in" prop has to be false
-    Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(false)
-
-    // Advance time by 250ms
+    // Advance past exit animation and reopen interval
     act(() => {
-      jest.advanceTimersByTime(defaultInterval)
-      wrapper.update()
+      jest.advanceTimersByTime(defaultInterval + 200)
     })
 
-    // "in" prop has to be true after delay
-    Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(true)
+    // Snackbar should be open again
+    expect(document.querySelector('.snackbar')).not.toBeNull()
 
-    // Advance time by 5 seconds
+    // Advance past auto-close duration
     act(() => {
-      jest.advanceTimersByTime(defaultDuration)
-      wrapper.update()
+      jest.advanceTimersByTime(defaultDuration + 200)
     })
 
-    // "in" prop has to be false after duration ends
-    Transition = wrapper.find('Transition')
-    expect(Transition.props().in).toBe(false)
+    expect(document.querySelector('.snackbar')).toBeNull()
   })
 })

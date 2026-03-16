@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useCallback, useContext } from 'react'
 import { SnackbarContext, defaultDuration, defaultPosition, positions } from './Snackbar'
 
 // Custom hook to trigger the snackbar on function components
@@ -9,15 +9,17 @@ export const useSnackbar = ({
 } = {}) => {
   const { openSnackbar, closeSnackbar } = useContext(SnackbarContext)
 
-  // If no correct position is passed, 'bottom-center' is set
-  if (!positions.includes(position)) {
-    position = defaultPosition
-  }
+  // Resolve position without mutating the parameter
+  const resolvedPosition = positions.includes(position) ? position : defaultPosition
 
-  function open(text = '', duration = defaultDuration , backgroundColor=null) {
-    if(backgroundColor){style.backgroundColor = backgroundColor;}
-    openSnackbar(text, duration, position, style, closeStyle)
-  }
+  const open = useCallback(
+    (text = '', duration = defaultDuration, backgroundColor = null) => {
+      // Spread into a new object instead of mutating the options style
+      const resolvedStyle = backgroundColor ? { ...style, backgroundColor } : style
+      openSnackbar(text, duration, resolvedPosition, resolvedStyle, closeStyle)
+    },
+    [openSnackbar, resolvedPosition, style, closeStyle]
+  )
 
   // Returns methods in hooks array way
   return [open, closeSnackbar]

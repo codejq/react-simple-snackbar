@@ -1,16 +1,17 @@
 declare module 'react-simple-snackbar' {
 
   export type SnackbarProviderProps = {
-    children?: React.ReactChild | React.ReactChildren | JSX.Element | JSX.Element[];
+    children?: React.ReactNode;
   };
 
   export const SnackbarProvider: React.FC<SnackbarProviderProps>;
 
   /**
    * @argument node The node you want to show into the Snackbar.
-   * @argument duration A number in milliseconds to set the duration of the Snackbar. The default value is 5000.
+   * @argument duration A number in milliseconds to set the duration of the Snackbar. The default value is 8000.
+   * @argument backgroundColor An optional CSS color string to override the Snackbar's background color for this call.
    */
-  type OpenSnackbar = (node: string | JSX.Element, duration?: number) => void;
+  type OpenSnackbar = (node: string | JSX.Element, duration?: number, backgroundColor?: string) => void;
 
   /**
    * This method is used if you want to close the Snackbar programmatically. It doesn't receive any params.
@@ -22,7 +23,7 @@ declare module 'react-simple-snackbar' {
   export interface SnackbarOptions {
 
     /**
-     * A custom position for your Snackbar. The default value is bottom-center
+     * A custom position for your Snackbar. The default value is bottom-center.
      */
     position?: SnackbarPosition;
 
