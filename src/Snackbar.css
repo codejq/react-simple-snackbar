@@ -1,155 +1,313 @@
+/* ============================================================
+   react-simple-snackbar — Modern UI v1.2.0
+   ============================================================ */
+
+/* ---------- Wrapper positioning ---------- */
+
 .snackbar-wrapper {
-  display: flex;
-  align-items: center;
-  margin: 8px;
   position: fixed;
-  right: 0;
-  left: 0;
-  z-index: 1;
-  transition: opacity 150ms, transform 150ms;
+  z-index: 9999;
   pointer-events: none;
 }
 
-.snackbar-wrapper-top-left,
-.snackbar-wrapper-top-center,
-.snackbar-wrapper-top-right {
-  top: 8px;
+/* Corner positions */
+.snackbar-wrapper-top-left    { top: 24px; left: 24px; }
+.snackbar-wrapper-top-right   { top: 24px; right: 24px; }
+.snackbar-wrapper-bottom-left { bottom: 24px; left: 24px; }
+.snackbar-wrapper-bottom-right{ bottom: 24px; right: 24px; }
+
+/* Centered-horizontal positions */
+.snackbar-wrapper-top-center {
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-.snackbar-wrapper-bottom-left,
-.snackbar-wrapper-bottom-center,
-.snackbar-wrapper-bottom-right {
-  bottom: 8px;
-}
-
-.snackbar-wrapper-top-left,
-.snackbar-wrapper-bottom-left {
-  justify-content: flex-start;
-}
-
-.snackbar-wrapper-top-center,
 .snackbar-wrapper-bottom-center {
-  justify-content: center;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-.snackbar-wrapper-top-right,
-.snackbar-wrapper-bottom-right {
-  justify-content: flex-end;
+/* True viewport center (default) */
+.snackbar-wrapper-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
+
+/* ---------- Snackbar box ---------- */
 
 .snackbar {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  border-radius: 4px;
-  min-width: 334px;
-  max-width: 672px;
-  background-color: #333;
-  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14),
-    0 1px 18px 0 rgba(0, 0, 0, 0.12);
+  gap: 14px;
+  min-width: 400px;
+  max-width: 580px;
+  padding: 16px 18px 20px 22px; /* extra bottom for progress bar */
+  background: rgba(15, 15, 20, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.5),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 450;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.87);
-  letter-spacing: 0.25px;
-  line-height: 20px;
-  text-align: left;
+  position: relative;
+  overflow: hidden;
+  pointer-events: all;
 }
 
-/* Responsiveness based on Material Design */
-@media (max-width: 480px), (max-width: 344px) {
-  .snackbar {
-    min-width: 100%;
-  }
+/* ---------- Progress bar ---------- */
+
+.snackbar::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  border-radius: 0 0 16px 16px;
+  animation: snackbar-progress var(--snackbar-duration, 6000ms) linear forwards;
+  transform-origin: left center;
 }
+
+@keyframes snackbar-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ---------- Text ---------- */
 
 .snackbar__text {
-  flex-grow: 1;
-  padding: 14px 16px;
+  flex: 1;
+  padding: 0;
   margin: 0;
   pointer-events: auto;
 }
 
+/* ---------- Close button ---------- */
+
 .snackbar__close {
   flex-shrink: 0;
-  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  width: 36px;
-  height: 36px;
-  padding: 8px;
-  margin: 0 8px 0 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.6);
   cursor: pointer;
-  position: relative;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
-
-  /* Reset button styles */
   outline: none;
-  background-color: transparent;
-  border: none;
-
-  /* SVG icon properties */
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.87);
+  font-size: 11px;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
-.snackbar__close:before {
-  content: '';
-  background-color: #fff;
-  border-radius: 50%;
+.snackbar__close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.snackbar__close:active {
+  transform: scale(0.95);
+}
+
+/* ============================================================
+   Animations
+   ============================================================
+   IMPORTANT: positions that use transform for layout (center,
+   top-center, bottom-center) must include the base transform
+   in every animation state to avoid it being overridden.
+   ============================================================ */
+
+/* ---------- center (scale + fade) ---------- */
+
+.snackbar-enter-center {
   opacity: 0;
-  position: absolute;
-  transition: opacity 120ms linear;
-  top: 0%;
-  left: 0%;
-  width: 100%;
-  height: 100%;
+  transform: translate(-50%, -50%) scale(0.88);
 }
 
-@media (hover: hover) {
-  .snackbar__close:hover:before {
-    opacity: 0.08;
-  }
-}
-
-/* CSSTransition classNames logic */
-.snackbar-enter,
-.snackbar-exit-active {
-  opacity: 0;
-}
-
-.snackbar-enter-active {
+.snackbar-enter-active-center {
   opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  transition:
+    opacity 280ms ease,
+    transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+.snackbar-exit-active-center {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.88);
+  transition:
+    opacity 200ms ease,
+    transform 220ms ease-in;
+}
+
+/* ---------- top-center (slide down + fade) ---------- */
+
+.snackbar-enter-top-center {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-28px) scale(0.95);
+}
+
+.snackbar-enter-active-top-center {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition:
+    opacity 250ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.snackbar-exit-active-top-center {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-18px) scale(0.95);
+  transition:
+    opacity 200ms ease,
+    transform 220ms ease-in;
+}
+
+/* ---------- bottom-center (slide up + fade) ---------- */
+
+.snackbar-enter-bottom-center {
+  opacity: 0;
+  transform: translateX(-50%) translateY(28px) scale(0.95);
+}
+
+.snackbar-enter-active-bottom-center {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition:
+    opacity 250ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.snackbar-exit-active-bottom-center {
+  opacity: 0;
+  transform: translateX(-50%) translateY(18px) scale(0.95);
+  transition:
+    opacity 200ms ease,
+    transform 220ms ease-in;
+}
+
+/* ---------- top corners (slide down + fade) ---------- */
 
 .snackbar-enter-top-left,
-.snackbar-enter-top-center,
-.snackbar-enter-top-right,
-.snackbar-exit-active-top-left,
-.snackbar-exit-active-top-center,
-.snackbar-exit-active-top-right {
-  transform: translateY(-16px);
-}
-
-.snackbar-enter-bottom-left,
-.snackbar-enter-bottom-center,
-.snackbar-enter-bottom-right,
-.snackbar-exit-active-bottom-left,
-.snackbar-exit-active-bottom-center,
-.snackbar-exit-active-bottom-right {
-  transform: translateY(16px);
+.snackbar-enter-top-right {
+  opacity: 0;
+  transform: translateY(-28px) scale(0.95);
 }
 
 .snackbar-enter-active-top-left,
-.snackbar-enter-active-top-center,
-.snackbar-enter-active-top-right,
+.snackbar-enter-active-top-right {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 250ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.snackbar-exit-active-top-left,
+.snackbar-exit-active-top-right {
+  opacity: 0;
+  transform: translateY(-18px) scale(0.95);
+  transition:
+    opacity 200ms ease,
+    transform 220ms ease-in;
+}
+
+/* ---------- bottom corners (slide up + fade) ---------- */
+
+.snackbar-enter-bottom-left,
+.snackbar-enter-bottom-right {
+  opacity: 0;
+  transform: translateY(28px) scale(0.95);
+}
+
 .snackbar-enter-active-bottom-left,
-.snackbar-enter-active-bottom-center,
 .snackbar-enter-active-bottom-right {
-  transform: translateY(0px);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 250ms ease,
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.snackbar-exit-active-bottom-left,
+.snackbar-exit-active-bottom-right {
+  opacity: 0;
+  transform: translateY(18px) scale(0.95);
+  transition:
+    opacity 200ms ease,
+    transform 220ms ease-in;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 540px) {
+  .snackbar {
+    min-width: calc(100vw - 32px);
+    max-width: calc(100vw - 32px);
+  }
+
+  .snackbar-wrapper-top-left,
+  .snackbar-wrapper-top-center,
+  .snackbar-wrapper-top-right {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+  }
+
+  .snackbar-wrapper-bottom-left,
+  .snackbar-wrapper-bottom-center,
+  .snackbar-wrapper-bottom-right {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+  }
+
+  .snackbar-wrapper-center {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    transform: none;
+  }
+
+  /* Re-apply enter/exit without base transforms on mobile */
+  .snackbar-enter-top-center,
+  .snackbar-enter-bottom-center,
+  .snackbar-enter-center {
+    transform: translateY(20px) scale(0.95);
+  }
+
+  .snackbar-enter-active-top-center,
+  .snackbar-enter-active-bottom-center,
+  .snackbar-enter-active-center {
+    transform: translateY(0) scale(1);
+  }
+
+  .snackbar-exit-active-top-center,
+  .snackbar-exit-active-bottom-center,
+  .snackbar-exit-active-center {
+    transform: translateY(12px) scale(0.95);
+  }
 }

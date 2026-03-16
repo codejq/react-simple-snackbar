@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>react-simple-snackbar — Beautiful Snackbars for React</title>
+  <meta name="description" content="A tiny, customizable snackbar library for React 16–19 with TypeScript support." />
+
+  <!-- Snackbar styles -->
+  <link rel="stylesheet" href="snackbar.css" />
+
+  <!-- CDN dependencies -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-transition-group@4/dist/react-transition-group.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* ── CSS Variables ──────────────────────────────────────── */
+    :root {
+      --bg:          #0a0a0f;
+      --bg-card:     rgba(255, 255, 255, 0.04);
+      --bg-card-hover: rgba(255, 255, 255, 0.07);
+      --border:      rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --primary:     #6366f1;
+      --primary-hover: #4f46e5;
+      --accent:      #8b5cf6;
+      --text:        #e2e8f0;
+      --text-muted:  #94a3b8;
+      --text-dim:    #64748b;
+      --radius-lg:   16px;
+      --radius-md:   10px;
+      --radius-sm:   6px;
+      --transition:  180ms ease;
+    }
+
+    /* ── Reset / Base ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    img { display: block; max-width: 100%; }
+
+    /* ── Animated background ────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(139, 92, 246, 0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 30% at 50% 50%, rgba(236, 72, 153, 0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      animation: bg-drift 18s ease-in-out infinite alternate;
+    }
+
+    @keyframes bg-drift {
+      0%   { opacity: 1;    transform: scale(1)    translateY(0); }
+      50%  { opacity: 0.85; transform: scale(1.04) translateY(-12px); }
+      100% { opacity: 1;    transform: scale(1)    translateY(0); }
+    }
+
+    /* ── Layout helpers ─────────────────────────────────────── */
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    section { position: relative; z-index: 1; }
+
+    /* ── Nav ────────────────────────────────────────────────── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 15, 0.82);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .nav-logo-icon {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color var(--transition), background var(--transition);
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+      background: var(--bg-card);
+    }
+
+    .nav-link svg { width: 16px; height: 16px; }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    .hero {
+      padding: 120px 0 100px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 14px;
+      background: rgba(99, 102, 241, 0.12);
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #a5b4fc;
+      margin-bottom: 32px;
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #6366f1;
+      box-shadow: 0 0 8px #6366f1;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 7vw, 80px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin-bottom: 24px;
+      background: linear-gradient(135deg, #fff 0%, #c7d2fe 40%, #a78bfa 70%, #f0abfc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradient-shift 6s ease-in-out infinite alternate;
+      background-size: 200% 200%;
+    }
+
+    @keyframes gradient-shift {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .hero-sub {
+      font-size: clamp(17px, 2.5vw, 21px);
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 44px;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 26px;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+      letter-spacing: -0.01em;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(99, 102, 241, 0.35);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 6px 32px rgba(99, 102, 241, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    /* ── Section headers ────────────────────────────────────── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-label {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .section-sub {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Features ───────────────────────────────────────────── */
+    .features {
+      padding: 96px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 26px;
+      transition: background var(--transition), border-color var(--transition), transform 200ms ease;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));
+      border: 1px solid rgba(99,102,241,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+    }
+
+    .feature-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .feature-desc {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── Live Demo ──────────────────────────────────────────── */
+    .demo {
+      padding: 96px 0;
+    }
+
+    .demo-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .demo-row {
+      margin-bottom: 28px;
+    }
+
+    .demo-row:last-of-type { margin-bottom: 0; }
+
+    .demo-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    /* Position buttons */
+    .position-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .pos-btn {
+      padding: 9px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 12.5px;
+      font-weight: 500;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+      text-align: center;
+    }
+
+    .pos-btn:hover {
+      background: rgba(255,255,255,0.09);
+      color: var(--text);
+    }
+
+    .pos-btn.active {
+      background: rgba(99,102,241,0.18);
+      border-color: rgba(99,102,241,0.45);
+      color: #a5b4fc;
+    }
+
+    /* Color swatches */
+    .swatch-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 160ms ease, border-color 160ms ease;
+      position: relative;
+    }
+
+    .swatch:hover { transform: scale(1.12); }
+
+    .swatch.active {
+      border-color: #fff;
+      transform: scale(1.1);
+    }
+
+    .swatch.active::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* Duration slider */
+    .slider-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .slider-row input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.1);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider-row input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.5);
+    }
+
+    .slider-row input[type=range]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      cursor: pointer;
+      border: none;
+    }
+
+    .slider-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #a5b4fc;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    /* Message input */
+    .msg-input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    .msg-input:focus {
+      border-color: rgba(99,102,241,0.5);
+      background: rgba(255,255,255,0.07);
+    }
+
+    .msg-input::placeholder { color: var(--text-dim); }
+
+    .demo-footer {
+      margin-top: 28px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── Installation ───────────────────────────────────────── */
+    .install {
+      padding: 96px 0;
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 700px) {
+      .install-grid { grid-template-columns: 1fr; }
+    }
+
+    .code-block {
+      background: rgba(0,0,0,0.45);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .code-lang {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      font-family: inherit;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+
+    .copy-btn.copied {
+      color: #4ade80;
+      border-color: rgba(74,222,128,0.3);
+    }
+
+    .code-body {
+      padding: 20px 22px;
+      overflow-x: auto;
+    }
+
+    .code-body pre {
+      margin: 0;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: #e2e8f0;
+      white-space: pre;
+    }
+
+    .tok-keyword  { color: #c084fc; }
+    .tok-string   { color: #86efac; }
+    .tok-comment  { color: #475569; font-style: italic; }
+    .tok-tag      { color: #7dd3fc; }
+    .tok-attr     { color: #fbbf24; }
+    .tok-fn       { color: #a5b4fc; }
+    .tok-punct    { color: #64748b; }
+    .tok-import   { color: #c084fc; }
+
+    /* ── API Reference ──────────────────────────────────────── */
+    .api {
+      padding: 96px 0;
+    }
+
+    .api-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 14px 20px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background var(--transition);
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    td {
+      padding: 14px 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+      vertical-align: top;
+    }
+
+    td:first-child { color: #a5b4fc; font-family: 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+
+    .td-type {
+      color: #86efac;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 12.5px;
+    }
+
+    .td-default {
+      color: #fbbf24;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 12.5px;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 0;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-logo {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .footer-sub {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 14px;
+      color: var(--text-dim);
+      transition: color var(--transition);
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    /* ── Snackbar root mount ─────────────────────────────────── */
+    #snackbar-root { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+
+    /* ── Responsive helpers ─────────────────────────────────── */
+    @media (max-width: 600px) {
+      .hero { padding: 80px 0 64px; }
+      .demo-panel { padding: 24px 18px; }
+      .position-grid { grid-template-columns: repeat(2, 1fr); }
+      nav .nav-links .nav-link span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Nav ─────────────────────────────────────────────── -->
+  <nav>
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">🍞</div>
+        react-simple-snackbar
+      </a>
+      <div class="nav-links">
+        <a href="#demo" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+          <span>Demo</span>
+        </a>
+        <a href="https://github.com/evandromacedo/react-simple-snackbar" target="_blank" rel="noopener" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          <span>GitHub</span>
+        </a>
+        <a href="https://www.npmjs.com/package/react-simple-snackbar" target="_blank" rel="noopener" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.763 0C.786 0 0 .786 0 1.763v20.474C0 23.214.786 24 1.763 24h20.474c.977 0 1.763-.786 1.763-1.763V1.763C24 .786 23.214 0 22.237 0zM5.13 5.323l13.837.019-.009 13.836H13.12v-9.337h-2.911v9.337H5.13z"/></svg>
+          <span>npm</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        v1.1.11 — Now with React 19 support
+      </div>
+      <h1>Beautiful Snackbars<br/>for React</h1>
+      <p class="hero-sub">
+        A tiny, zero-dependency snackbar library for React&nbsp;16–19.
+        Fully customizable, TypeScript-ready, and weighs under 3&nbsp;kB.
+      </p>
+      <div class="hero-actions">
+        <button id="hero-demo-btn" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l14 9-14 9V3z"/></svg>
+          Try it
+        </button>
+        <a href="https://github.com/evandromacedo/react-simple-snackbar" target="_blank" rel="noopener" class="btn btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ─────────────────────────────────────────── -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Why react-simple-snackbar</div>
+        <h2 class="section-title">Everything you need, nothing you don't</h2>
+        <p class="section-sub">Designed to drop in and get out of your way.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Lightweight</div>
+          <p class="feature-desc">Under 3&nbsp;kB gzipped. No runtime dependencies — just React and your imagination.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <div class="feature-title">Customizable</div>
+          <p class="feature-desc">Full control over position, duration, colors, close button, and content. Pass any JSX as the message.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚛️</div>
+          <div class="feature-title">React 16 – 19</div>
+          <p class="feature-desc">Tested against every major React version from 16 through the latest React 19 release.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔷</div>
+          <div class="feature-title">TypeScript</div>
+          <p class="feature-desc">Ships with first-class TypeScript types. Autocomplete and compile-time safety included.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Live Demo ─────────────────────────────────────────── -->
+  <section class="demo" id="demo">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Playground</div>
+        <h2 class="section-title">Live Demo</h2>
+        <p class="section-sub">Tweak position, color, and duration then fire a snackbar right in this page.</p>
+      </div>
+      <div class="demo-panel">
+
+        <div class="demo-row">
+          <div class="demo-label">Position</div>
+          <div class="position-grid" id="pos-grid"></div>
+        </div>
+
+        <div class="demo-row">
+          <div class="demo-label">Color preset</div>
+          <div class="swatch-row" id="swatch-row"></div>
+        </div>
+
+        <div class="demo-row">
+          <div class="demo-label">Duration — <span id="dur-label">4s</span></div>
+          <div class="slider-row">
+            <input type="range" id="dur-slider" min="1" max="15" value="4" />
+            <span class="slider-value" id="dur-val">4s</span>
+          </div>
+        </div>
+
+        <div class="demo-row">
+          <div class="demo-label">Message</div>
+          <input
+            type="text"
+            class="msg-input"
+            id="msg-input"
+            placeholder="Type your snackbar message…"
+            value="Hello! This is react-simple-snackbar 🎉"
+          />
+        </div>
+
+        <div class="demo-footer">
+          <button id="show-btn" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l14 9-14 9V3z"/></svg>
+            Show Snackbar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Installation ─────────────────────────────────────── -->
+  <section class="install" id="install">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Get started</div>
+        <h2 class="section-title">Installation</h2>
+        <p class="section-sub">Add react-simple-snackbar to your project in seconds.</p>
+      </div>
+
+      <div class="install-grid">
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">npm</span>
+            <button class="copy-btn" data-copy="npm install react-simple-snackbar">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <div class="code-body"><pre><span class="tok-keyword">npm</span> install react-simple-snackbar</pre></div>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">yarn</span>
+            <button class="copy-btn" data-copy="yarn add react-simple-snackbar">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <div class="code-body"><pre><span class="tok-keyword">yarn</span> add react-simple-snackbar</pre></div>
+        </div>
+      </div>
+
+      <div class="code-block" style="margin-bottom: 20px;">
+        <div class="code-header">
+          <span class="code-lang">Provider setup — App.jsx</span>
+          <button class="copy-btn" data-copy="import SnackbarProvider from 'react-simple-snackbar'
+
+function App() {
+  return (
+    <SnackbarProvider>
+      <YourApp />
+    </SnackbarProvider>
+  )
+}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <div class="code-body"><pre><span class="tok-import">import</span> <span class="tok-fn">SnackbarProvider</span> <span class="tok-import">from</span> <span class="tok-string">'react-simple-snackbar'</span>
+
+<span class="tok-keyword">function</span> <span class="tok-fn">App</span><span class="tok-punct">()</span> <span class="tok-punct">{</span>
+  <span class="tok-keyword">return</span> <span class="tok-punct">(</span>
+    <span class="tok-tag">&lt;SnackbarProvider&gt;</span>
+      <span class="tok-tag">&lt;YourApp</span> <span class="tok-attr">/</span><span class="tok-tag">&gt;</span>
+    <span class="tok-tag">&lt;/SnackbarProvider&gt;</span>
+  <span class="tok-punct">)</span>
+<span class="tok-punct">}</span></pre></div>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-lang">Hook usage — Component.jsx</span>
+          <button class="copy-btn" data-copy="import { useSnackbar } from 'react-simple-snackbar'
+
+function MyComponent() {
+  const [openSnackbar, closeSnackbar] = useSnackbar()
+
+  return (
+    <button onClick={() => openSnackbar('Hello world!')}>
+      Show snackbar
+    </button>
+  )
+}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <div class="code-body"><pre><span class="tok-import">import</span> <span class="tok-punct">{</span> <span class="tok-fn">useSnackbar</span> <span class="tok-punct">}</span> <span class="tok-import">from</span> <span class="tok-string">'react-simple-snackbar'</span>
+
+<span class="tok-keyword">function</span> <span class="tok-fn">MyComponent</span><span class="tok-punct">()</span> <span class="tok-punct">{</span>
+  <span class="tok-keyword">const</span> <span class="tok-punct">[</span><span class="tok-fn">openSnackbar</span><span class="tok-punct">,</span> <span class="tok-fn">closeSnackbar</span><span class="tok-punct">]</span> <span class="tok-keyword">=</span> <span class="tok-fn">useSnackbar</span><span class="tok-punct">()</span>
+
+  <span class="tok-keyword">return</span> <span class="tok-punct">(</span>
+    <span class="tok-tag">&lt;button</span> <span class="tok-attr">onClick</span><span class="tok-punct">={</span><span class="tok-punct">()</span> <span class="tok-keyword">=&gt;</span> <span class="tok-fn">openSnackbar</span><span class="tok-punct">(</span><span class="tok-string">'Hello world!'</span><span class="tok-punct">)</span><span class="tok-punct">}</span><span class="tok-tag">&gt;</span>
+      Show snackbar
+    <span class="tok-tag">&lt;/button&gt;</span>
+  <span class="tok-punct">)</span>
+<span class="tok-punct">}</span></pre></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── API Reference ────────────────────────────────────── -->
+  <section class="api" id="api">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Reference</div>
+        <h2 class="section-title">API</h2>
+        <p class="section-sub">Everything you can pass to <code style="color:#a5b4fc;font-family:monospace">useSnackbar(options)</code>.</p>
+      </div>
+      <div class="api-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Prop</th>
+              <th>Type</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>position</td>
+              <td class="td-type">string</td>
+              <td class="td-default">'bottom-center'</td>
+              <td>Where the snackbar appears. One of 7 positions.</td>
+            </tr>
+            <tr>
+              <td>style</td>
+              <td class="td-type">CSSProperties</td>
+              <td class="td-default">{}</td>
+              <td>Inline styles applied to the snackbar box.</td>
+            </tr>
+            <tr>
+              <td>closeStyle</td>
+              <td class="td-type">CSSProperties</td>
+              <td class="td-default">{}</td>
+              <td>Inline styles applied to the close button.</td>
+            </tr>
+            <tr>
+              <td>openSnackbar(node, duration?)</td>
+              <td class="td-type">function</td>
+              <td class="td-default">—</td>
+              <td>Opens the snackbar with the given ReactNode and optional duration in ms.</td>
+            </tr>
+            <tr>
+              <td>closeSnackbar()</td>
+              <td class="td-type">function</td>
+              <td class="td-default">—</td>
+              <td>Programmatically dismisses the current snackbar.</td>
+            </tr>
+            <tr>
+              <td>duration</td>
+              <td class="td-type">number</td>
+              <td class="td-default">5000</td>
+              <td>Auto-close delay in milliseconds. Pass <code style="color:#fbbf24">Infinity</code> to disable.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ───────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <div class="footer-logo">react-simple-snackbar</div>
+      <div class="footer-sub">MIT License · Made with ♥ by the open-source community</div>
+      <div class="footer-links">
+        <a href="https://github.com/evandromacedo/react-simple-snackbar" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://www.npmjs.com/package/react-simple-snackbar" target="_blank" rel="noopener">npm</a>
+        <a href="https://github.com/evandromacedo/react-simple-snackbar/blob/master/LICENSE.md" target="_blank" rel="noopener">License</a>
+        <a href="https://github.com/evandromacedo/react-simple-snackbar/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── Snackbar mount point ──────────────────────────────── -->
+  <div id="snackbar-root"></div>
+
+  <!-- ── Inline React Snackbar App ─────────────────────────── -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, createContext, useContext } = React;
+    const { CSSTransition } = window.ReactTransitionGroup;
+
+    /* ── Constants ──────────────────────────────────────────── */
+    const POSITIONS = [
+      'top-left', 'top-center', 'top-right',
+      'bottom-left', 'bottom-center', 'bottom-right',
+      'center',
+    ];
+
+    const COLOR_PRESETS = [
+      { name: 'Default',  bg: 'rgba(15,15,20,0.92)',  color: '#f1f5f9' },
+      { name: 'Indigo',   bg: 'rgba(67,56,202,0.92)', color: '#fff'    },
+      { name: 'Emerald',  bg: 'rgba(5,150,105,0.92)', color: '#fff'    },
+      { name: 'Rose',     bg: 'rgba(190,18,60,0.92)', color: '#fff'    },
+      { name: 'Amber',    bg: 'rgba(180,83,9,0.92)',  color: '#fff'    },
+      { name: 'Violet',   bg: 'rgba(109,40,217,0.92)',color: '#fff'    },
+    ];
+
+    const SWATCH_DISPLAY = ['#1e1b4b','#312e81','#065f46','#881337','#78350f','#4c1d95'];
+
+    /* ── Snackbar Context ────────────────────────────────────── */
+    const SnackbarCtx = createContext(null);
+
+    function SnackbarProvider({ children }) {
+      const [state, setState] = useState({
+        open: false,
+        message: '',
+        duration: 4000,
+        position: 'center',
+        style: {},
+      });
+
+      const timerRef = useRef(null);
+
+      const openSnackbar = useCallback((message, options = {}) => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        setState(prev => ({ ...prev, open: false }));
+        // small tick so CSSTransition re-triggers if already open
+        setTimeout(() => {
+          const dur = options.duration ?? 4000;
+          setState({
+            open: true,
+            message,
+            duration: dur,
+            position: options.position ?? 'center',
+            style: options.style ?? {},
+          });
+          if (dur !== Infinity) {
+            timerRef.current = setTimeout(() => {
+              setState(prev => ({ ...prev, open: false }));
+            }, dur);
+          }
+        }, 20);
+      }, []);
+
+      const closeSnackbar = useCallback(() => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+        setState(prev => ({ ...prev, open: false }));
+      }, []);
+
+      return (
+        <SnackbarCtx.Provider value={{ openSnackbar, closeSnackbar }}>
+          {children}
+          <SnackbarPortal state={state} onClose={closeSnackbar} />
+        </SnackbarCtx.Provider>
+      );
+    }
+
+    function useSnackbar() {
+      const ctx = useContext(SnackbarCtx);
+      if (!ctx) throw new Error('useSnackbar must be used inside SnackbarProvider');
+      return [ctx.openSnackbar, ctx.closeSnackbar];
+    }
+
+    /* ── Snackbar Portal ─────────────────────────────────────── */
+    function SnackbarPortal({ state, onClose }) {
+      const { open, message, duration, position, style } = state;
+
+      const classNames = {
+        enter:       `snackbar-enter-${position}`,
+        enterActive: `snackbar-enter-active-${position}`,
+        exit:        `snackbar-exit-${position}`,
+        exitActive:  `snackbar-exit-active-${position}`,
+      };
+
+      const wrapperClass = `snackbar-wrapper snackbar-wrapper-${position}`;
+
+      const durationMs = duration === Infinity ? 6000 : duration;
+
+      return ReactDOM.createPortal(
+        <div className={wrapperClass}>
+          <CSSTransition
+            in={open}
+            timeout={{ enter: 300, exit: 220 }}
+            classNames={classNames}
+            unmountOnExit
+            mountOnEnter
+          >
+            <div
+              className="snackbar"
+              style={{ '--snackbar-duration': `${durationMs}ms`, ...style }}
+              role="alert"
+              aria-live="polite"
+            >
+              <span className="snackbar__text">{message}</span>
+              <button
+                className="snackbar__close"
+                onClick={onClose}
+                aria-label="Close notification"
+              >
+                ✕
+              </button>
+            </div>
+          </CSSTransition>
+        </div>,
+        document.getElementById('snackbar-root')
+      );
+    }
+
+    /* ── Demo Controls ───────────────────────────────────────── */
+    function DemoControls() {
+      const [openSnackbar] = useSnackbar();
+      const [position, setPosition] = useState('center');
+      const [colorIdx, setColorIdx] = useState(0);
+      const [duration, setDuration] = useState(4);
+      const [message, setMessage] = useState('Hello! This is react-simple-snackbar 🎉');
+
+      /* Sync position-grid buttons */
+      useEffect(() => {
+        const grid = document.getElementById('pos-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        POSITIONS.forEach(pos => {
+          const btn = document.createElement('button');
+          btn.className = 'pos-btn' + (pos === position ? ' active' : '');
+          btn.textContent = pos;
+          btn.onclick = () => setPosition(pos);
+          grid.appendChild(btn);
+        });
+      }, [position]);
+
+      /* Sync swatch buttons */
+      useEffect(() => {
+        const row = document.getElementById('swatch-row');
+        if (!row) return;
+        row.innerHTML = '';
+        SWATCH_DISPLAY.forEach((hex, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'swatch' + (i === colorIdx ? ' active' : '');
+          btn.style.background = hex;
+          btn.title = COLOR_PRESETS[i].name;
+          btn.setAttribute('aria-label', COLOR_PRESETS[i].name);
+          btn.onclick = () => setColorIdx(i);
+          row.appendChild(btn);
+        });
+      }, [colorIdx]);
+
+      /* Sync duration slider */
+      useEffect(() => {
+        const slider = document.getElementById('dur-slider');
+        const label  = document.getElementById('dur-label');
+        const val    = document.getElementById('dur-val');
+        if (!slider) return;
+        slider.value = String(duration);
+        if (label) label.textContent = `${duration}s`;
+        if (val)   val.textContent   = `${duration}s`;
+        const handler = (e) => setDuration(Number(e.target.value));
+        slider.addEventListener('input', handler);
+        return () => slider.removeEventListener('input', handler);
+      }, [duration]);
+
+      /* Sync message input */
+      useEffect(() => {
+        const input = document.getElementById('msg-input');
+        if (!input) return;
+        input.value = message;
+        const handler = (e) => setMessage(e.target.value);
+        input.addEventListener('input', handler);
+        return () => input.removeEventListener('input', handler);
+      }, []);
+
+      const handleShow = useCallback(() => {
+        const preset = COLOR_PRESETS[colorIdx];
+        openSnackbar(message || 'Hello from react-simple-snackbar!', {
+          position,
+          duration: duration * 1000,
+          style: {
+            background: preset.bg,
+            color: preset.color,
+          },
+        });
+      }, [openSnackbar, position, colorIdx, duration, message]);
+
+      /* Wire up the Show Snackbar and hero buttons */
+      useEffect(() => {
+        const showBtn  = document.getElementById('show-btn');
+        const heroBtn  = document.getElementById('hero-demo-btn');
+
+        const show = () => handleShow();
+        showBtn?.addEventListener('click', show);
+        heroBtn?.addEventListener('click', () => {
+          openSnackbar('Beautiful Snackbars for React ✨', {
+            position: 'bottom-center',
+            duration: 4000,
+          });
+        });
+
+        return () => {
+          showBtn?.removeEventListener('click', show);
+        };
+      }, [handleShow, openSnackbar]);
+
+      return null; // all UI is in vanilla DOM; we just wire events
+    }
+
+    /* ── Root App ────────────────────────────────────────────── */
+    function App() {
+      return (
+        <SnackbarProvider>
+          <DemoControls />
+        </SnackbarProvider>
+      );
+    }
+
+    /* ── Mount ───────────────────────────────────────────────── */
+    const appRoot = ReactDOM.createRoot(document.getElementById('snackbar-root'));
+    appRoot.render(<App />);
+  </script>
+
+  <!-- ── Copy button logic (vanilla JS) ──────────────────── -->
+  <script>
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const text = btn.dataset.copy;
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.innerHTML;
+          btn.classList.add('copied');
+          btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = orig;
+          }, 2000);
+        }).catch(() => {
+          // fallback for insecure contexts
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

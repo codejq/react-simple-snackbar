@@ -3,8 +3,8 @@ import { CSSTransition } from 'react-transition-group'
 import styles from './Snackbar.css'
 
 // Snackbar default values
-export const defaultPosition = 'bottom-center'
-export const defaultDuration = 8000
+export const defaultPosition = 'center'
+export const defaultDuration = 6000
 export const defaultInterval = 250
 export const positions = [
   'top-left',
@@ -13,6 +13,7 @@ export const positions = [
   'bottom-left',
   'bottom-center',
   'bottom-right',
+  'center',
 ]
 
 // Context used by the hook useSnackbar() and HoC withSnackbar()
@@ -91,7 +92,7 @@ export default function SnackbarProvider({ children }) {
       <CSSTransition
         nodeRef={nodeRef}
         in={open}
-        timeout={150}
+        timeout={{ enter: 300, exit: 220 }}
         mountOnEnter
         unmountOnExit
         // Sets timeout to close the snackbar after its duration
@@ -115,7 +116,10 @@ export default function SnackbarProvider({ children }) {
       >
         {/* nodeRef must be on the root DOM element that CSSTransition manages */}
         <div ref={nodeRef}>
-          <div className={styles.snackbar} style={snackState.customStyles}>
+          <div
+            className={styles.snackbar}
+            style={{ '--snackbar-duration': `${snackState.duration}ms`, ...snackState.customStyles }}
+          >
             {/* Snackbar's text */}
             <div className={styles.snackbar__text}>{snackState.text}</div>
 

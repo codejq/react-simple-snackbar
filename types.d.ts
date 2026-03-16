@@ -8,7 +8,7 @@ declare module 'react-simple-snackbar' {
 
   /**
    * @argument node The node you want to show into the Snackbar.
-   * @argument duration A number in milliseconds to set the duration of the Snackbar. The default value is 8000.
+   * @argument duration A number in milliseconds to set the duration of the Snackbar. The default value is 6000.
    * @argument backgroundColor An optional CSS color string to override the Snackbar's background color for this call.
    */
   type OpenSnackbar = (node: string | JSX.Element, duration?: number, backgroundColor?: string) => void;
@@ -18,12 +18,12 @@ declare module 'react-simple-snackbar' {
    */
   type CloseSnackbar = () => void;
 
-  export type SnackbarPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+  export type SnackbarPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right' | 'center';
 
   export interface SnackbarOptions {
 
     /**
-     * A custom position for your Snackbar. The default value is bottom-center.
+     * A custom position for your Snackbar. The default value is center (true viewport center).
      */
     position?: SnackbarPosition;
 
