@@ -1103,14 +1103,14 @@ function MyComponent() {
       const durationMs = duration === Infinity ? 6000 : duration;
 
       return ReactDOM.createPortal(
-        <div className={wrapperClass}>
-          <CSSTransition
-            in={open}
-            timeout={{ enter: 300, exit: 220 }}
-            classNames={classNames}
-            unmountOnExit
-            mountOnEnter
-          >
+        <CSSTransition
+          in={open}
+          timeout={{ enter: 300, exit: 220 }}
+          classNames={classNames}
+          unmountOnExit
+          mountOnEnter
+        >
+          <div className={wrapperClass}>
             <div
               className="snackbar"
               style={{ '--snackbar-duration': `${durationMs}ms`, ...style }}
@@ -1126,8 +1126,8 @@ function MyComponent() {
                 ✕
               </button>
             </div>
-          </CSSTransition>
-        </div>,
+          </div>
+        </CSSTransition>,
         document.getElementById('snackbar-root')
       );
     }
