@@ -3,6 +3,9 @@ import { render, screen, fireEvent, act, renderHook } from '@testing-library/rea
 import SnackbarProvider, { useSnackbar } from '..'
 import { defaultPosition, defaultDuration, defaultInterval } from '../Snackbar'
 
+// Exit animation timeout in ms (CSSTransition timeout.exit)
+const EXIT_TIMEOUT = 220
+
 const ComponentMock = ({
   text = '',
   duration = undefined,
@@ -32,7 +35,10 @@ describe('useSnackbar()', () => {
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
+    // Wrap timer flush in act() to avoid React state-update warnings
+    act(() => {
+      jest.runOnlyPendingTimers()
+    })
     jest.useRealTimers()
   })
 
@@ -53,20 +59,29 @@ describe('useSnackbar()', () => {
     // Simulates open()
     fireEvent.click(screen.getByTestId('open'))
 
-    // setTimeout called with defaultDuration ms delay
-    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), defaultDuration)
-
     // Open snackbar with '' text
     expect(document.querySelector('.snackbar__text').textContent).toEqual('')
 
-    // Position bottom-center on wrapper
+    // Position class applied to wrapper
     expect(document.querySelector('.snackbar-wrapper').className).toContain(
       `snackbar-wrapper-${defaultPosition}`
     )
 
-    // No styles for snackbar and close button
-    expect(document.querySelector('.snackbar').getAttribute('style')).toBeNull()
+    // No inline styles for snackbar and close button
+    expect(document.querySelector('.snackbar').style.cssText).toBe(
+      `--snackbar-duration: ${defaultDuration}ms;`
+    )
     expect(document.querySelector('.snackbar__close').getAttribute('style')).toBeNull()
+
+    // Advance past duration → closeSnackbar fires, React re-renders, exit timer scheduled
+    act(() => {
+      jest.advanceTimersByTime(defaultDuration + 50)
+    })
+    // Advance past exit animation → CSSTransition unmounts
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+    expect(document.querySelector('.snackbar')).toBeNull()
   })
 
   it('should render snackbar with text', () => {
@@ -78,12 +93,28 @@ describe('useSnackbar()', () => {
     expect(document.querySelector('.snackbar__text').textContent).toEqual(randomText)
   })
 
-  it('should set a custom duration on open()', () => {
-    renderWithProvider(<ComponentMock duration={3000} />)
+  it('should close snackbar after a custom duration', () => {
+    const customDuration = 3000
+    renderWithProvider(<ComponentMock duration={customDuration} />)
 
     fireEvent.click(screen.getByTestId('open'))
+    expect(document.querySelector('.snackbar')).not.toBeNull()
 
-    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 3000)
+    // Should still be open just before custom duration ends
+    act(() => {
+      jest.advanceTimersByTime(customDuration - 100)
+    })
+    expect(document.querySelector('.snackbar')).not.toBeNull()
+
+    // Should be closed after custom duration — advance remaining 100ms + buffer
+    act(() => {
+      jest.advanceTimersByTime(150)
+    })
+    // Advance past exit animation
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+    expect(document.querySelector('.snackbar')).toBeNull()
   })
 
   it('should set position className when passed correctly', () => {
@@ -158,7 +189,6 @@ describe('useSnackbar()', () => {
 
     fireEvent.click(screen.getByTestId('open'))
 
-    // Original style object must not be mutated
     expect(originalStyle).toEqual({ color: 'white' })
   })
 
@@ -170,9 +200,9 @@ describe('useSnackbar()', () => {
 
     fireEvent.click(screen.getByTestId('close'))
 
-    // Advance past CSSTransition exit animation (150ms timeout)
+    // Advance past CSSTransition exit animation
     act(() => {
-      jest.advanceTimersByTime(200)
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
     })
 
     expect(document.querySelector('.snackbar')).toBeNull()
@@ -184,9 +214,13 @@ describe('useSnackbar()', () => {
     fireEvent.click(screen.getByTestId('open'))
     expect(document.querySelector('.snackbar')).not.toBeNull()
 
-    // Advance past duration + exit animation
+    // Advance past duration → closeSnackbar fires, exit timer scheduled
     act(() => {
-      jest.advanceTimersByTime(defaultDuration + 200)
+      jest.advanceTimersByTime(defaultDuration + 50)
+    })
+    // Advance past exit animation → unmount
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
     })
 
     expect(document.querySelector('.snackbar')).toBeNull()
@@ -203,17 +237,21 @@ describe('useSnackbar()', () => {
     // Second open while still showing
     fireEvent.click(openButton)
 
-    // Advance past exit animation and reopen interval
+    // Advance past reopen interval (setOpen(false) already fired, this opens the new snackbar)
     act(() => {
-      jest.advanceTimersByTime(defaultInterval + 200)
+      jest.advanceTimersByTime(defaultInterval + 50)
     })
 
     // Snackbar should be open again
     expect(document.querySelector('.snackbar')).not.toBeNull()
 
-    // Advance past auto-close duration
+    // Advance past auto-close duration → closeSnackbar fires, exit timer scheduled
     act(() => {
-      jest.advanceTimersByTime(defaultDuration + 200)
+      jest.advanceTimersByTime(defaultDuration + 50)
+    })
+    // Advance past exit animation → unmount
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
     })
 
     expect(document.querySelector('.snackbar')).toBeNull()
