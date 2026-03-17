@@ -70,13 +70,13 @@ Requires **React 16.8 or later**. Compatible with React 16.8 through React 19.
 ### Installation
 
 ```sh
-npm install --save react-simple-snackbar
+npm install --save @codejq/react-simple-snackbar
 ```
 
 or
 
 ```sh
-yarn add react-simple-snackbar
+yarn add @codejq/react-simple-snackbar
 ```
 
 ### Basic Usage
@@ -86,7 +86,7 @@ First, you need to wrap your application into a `SnackbarProvider`:
 ```jsx
 // App.js
 import React from 'react'
-import SnackbarProvider from 'react-simple-snackbar'
+import SnackbarProvider from '@codejq/react-simple-snackbar'
 import SomeChildComponent from './SomeChildComponent'
 
 export default function App() {
@@ -106,7 +106,7 @@ Then you can use both options on any descendant component:
 ```jsx
 // SomeChildComponent.js
 import React from 'react'
-import { useSnackbar } from 'react-simple-snackbar'
+import { useSnackbar } from '@codejq/react-simple-snackbar'
 
 export default function SomeChildComponent() {
   const [openSnackbar, closeSnackbar] = useSnackbar()
@@ -130,7 +130,7 @@ export default function SomeChildComponent() {
 ```jsx
 // SomeChildComponent.js
 import React from 'react'
-import { withSnackbar } from 'react-simple-snackbar'
+import { withSnackbar } from '@codejq/react-simple-snackbar'
 
 class SomeChildComponent extends React.Component {
   render() {
@@ -262,7 +262,7 @@ You can mock the implementation of `useSnackbar` to return an array containing `
 // Component.test.js
 import React from 'react'
 import { render, fireEvent } from '@testing-library/react'
-import * as Snackbar from 'react-simple-snackbar'
+import * as Snackbar from '@codejq/react-simple-snackbar'
 import Component from './Component'
 
 // Mocks the open and close functions
