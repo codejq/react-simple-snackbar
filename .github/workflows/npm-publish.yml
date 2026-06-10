@@ -47,11 +47,15 @@ jobs:
       - run: npm install
       - run: npm run build
       - name: Verify npm token
+        id: npm-token-auth
         if: env.NODE_AUTH_TOKEN != ''
+        continue-on-error: true
         run: npm whoami
       - name: Publish to npm with token
-        if: env.NODE_AUTH_TOKEN != ''
+        if: steps.npm-token-auth.outcome == 'success'
         run: npm publish --access public
       - name: Publish to npm with trusted publishing
-        if: env.NODE_AUTH_TOKEN == ''
+        if: steps.npm-token-auth.outcome != 'success'
+        env:
+          NODE_AUTH_TOKEN:
         run: npm publish --access public --provenance
