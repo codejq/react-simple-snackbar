@@ -35,6 +35,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,6 +46,12 @@ jobs:
           cache: npm
       - run: npm install
       - run: npm run build
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Verify npm token
+        if: env.NODE_AUTH_TOKEN != ''
+        run: npm whoami
+      - name: Publish to npm with token
+        if: env.NODE_AUTH_TOKEN != ''
+        run: npm publish --access public
+      - name: Publish to npm with trusted publishing
+        if: env.NODE_AUTH_TOKEN == ''
+        run: npm publish --access public --provenance
