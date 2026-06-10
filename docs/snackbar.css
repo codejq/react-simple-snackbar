@@ -77,26 +77,6 @@
   pointer-events: all;
 }
 
-/* ── Progress bar ────────────────────────────────────────── */
-
-.snackbar::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 3px;
-  width: 100%;
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-  border-radius: 0 0 16px 16px;
-  animation: snackbar-progress var(--snackbar-duration, 6000ms) linear forwards;
-  transform-origin: left center;
-}
-
-@keyframes snackbar-progress {
-  from { transform: scaleX(1); }
-  to   { transform: scaleX(0); }
-}
-
 /* ── Text ────────────────────────────────────────────────── */
 
 .snackbar__text {

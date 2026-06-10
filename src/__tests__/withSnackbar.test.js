@@ -65,10 +65,8 @@ describe('withSnackbar()', () => {
       `snackbar-wrapper-${defaultPosition}`
     )
 
-    // Snackbar has --snackbar-duration inline style; close button has no inline styles
-    expect(document.querySelector('.snackbar').style.cssText).toBe(
-      `--snackbar-duration: ${defaultDuration}ms;`
-    )
+    // Snackbar and close button have no inline styles by default
+    expect(document.querySelector('.snackbar').style.cssText).toBe('')
     expect(document.querySelector('.snackbar__close').getAttribute('style')).toBeNull()
 
     // Advance past duration → closeSnackbar fires, React re-renders, exit timer scheduled
@@ -89,6 +87,39 @@ describe('withSnackbar()', () => {
     fireEvent.click(screen.getByTestId('open'))
 
     expect(document.querySelector('.snackbar__text').textContent).toEqual(randomText)
+  })
+
+  it('should open with default arguments', () => {
+    class ComponentWithDefaultOpen extends React.Component {
+      render() {
+        const { openSnackbar } = this.props
+        return (
+          <button data-testid="open-default" onClick={() => openSnackbar()}>
+            Open
+          </button>
+        )
+      }
+    }
+    const Wrapped = withSnackbar(ComponentWithDefaultOpen)
+    render(
+      <SnackbarProvider>
+        <Wrapped />
+      </SnackbarProvider>
+    )
+
+    fireEvent.click(screen.getByTestId('open-default'))
+
+    expect(document.querySelector('.snackbar__text').textContent).toEqual('')
+
+    act(() => {
+      jest.advanceTimersByTime(defaultDuration + 50)
+    })
+
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+
+    expect(document.querySelector('.snackbar')).toBeNull()
   })
 
   it('should close snackbar after a custom duration', () => {
@@ -220,6 +251,36 @@ describe('withSnackbar()', () => {
     })
 
     expect(document.querySelector('.snackbar')).toBeNull()
+  })
+
+  it('should close snackbar when clicking outside', () => {
+    renderWithProvider()
+
+    fireEvent.click(screen.getByTestId('open'))
+    expect(document.querySelector('.snackbar')).not.toBeNull()
+
+    fireEvent.mouseDown(document.body)
+
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+
+    expect(document.querySelector('.snackbar')).toBeNull()
+  })
+
+  it('should keep snackbar open when clicking inside', () => {
+    renderWithProvider()
+
+    fireEvent.click(screen.getByTestId('open'))
+    const snackbar = document.querySelector('.snackbar')
+
+    fireEvent.mouseDown(snackbar)
+
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+
+    expect(document.querySelector('.snackbar')).not.toBeNull()
   })
 
   it('should open and close snackbar after duration ends', () => {

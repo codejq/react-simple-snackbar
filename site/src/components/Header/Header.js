@@ -8,7 +8,7 @@ export default function() {
     <header className="header">
       <a
         className="header__github-icon"
-        href="https://github.com/evandromacedo/react-simple-snackbar"
+        href="https://github.com/codejq/react-simple-snackbar"
         target="blank"
       >
         <GitHubIcon />
@@ -24,38 +24,38 @@ export default function() {
       <h1 className="header__title">It's meant to be a REALLY simple Snackbar!</h1>
       <div className="header__badges">
         <a
-          href="https://www.npmjs.com/package/react-simple-snackbar"
+          href="https://www.npmjs.com/package/@codejq/react-simple-snackbar"
           title="NPM Version"
           target="blank"
         >
           <img
-            src="https://img.shields.io/npm/v/react-simple-snackbar"
+            src="https://img.shields.io/npm/v/@codejq/react-simple-snackbar"
             alt="NPM Version"
           />
         </a>
         <a
-          href="https://travis-ci.org/evandromacedo/react-simple-snackbar"
-          title="Build Status"
+          href="https://github.com/codejq/react-simple-snackbar/actions/workflows/npm-publish.yml"
+          title="CI Status"
           target="blank"
         >
           <img
-            src="https://travis-ci.org/evandromacedo/react-simple-snackbar.svg?branch=master"
-            alt="Build Status"
+            src="https://github.com/codejq/react-simple-snackbar/actions/workflows/npm-publish.yml/badge.svg"
+            alt="CI Status"
           />
         </a>
         <a
-          href="https://coveralls.io/github/evandromacedo/react-simple-snackbar?branch=master"
+          href="https://coveralls.io/github/codejq/react-simple-snackbar?branch=master"
           title="Coverage Status"
           target="blank"
         >
           <img
-            src="https://coveralls.io/repos/github/evandromacedo/react-simple-snackbar/badge.svg?branch=master"
+            src="https://coveralls.io/repos/github/codejq/react-simple-snackbar/badge.svg?branch=master"
             alt="Coverage Status"
           />
         </a>
         <a href="#" title="Gzipped size">
           <img
-            src="https://img.badgesize.io/evandromacedo/react-simple-snackbar/master/dist/index.js.svg?compression=gzip"
+            src="https://img.badgesize.io/codejq/react-simple-snackbar/master/dist/index.js.svg?compression=gzip"
             alt="Gzipped size"
           />
         </a>
@@ -66,12 +66,12 @@ export default function() {
           />
         </a>
         <a
-          href="https://github.com/evandromacedo/react-simple-snackbar/blob/master/LICENSE.md"
+          href="https://github.com/codejq/react-simple-snackbar/blob/master/LICENSE.md"
           title="MIT License"
           target="blank"
         >
           <img
-            src="https://img.shields.io/npm/l/@testing-library/react-hooks.svg"
+            src="https://img.shields.io/npm/l/@codejq/react-simple-snackbar.svg"
             alt="MIT License"
           />
         </a>

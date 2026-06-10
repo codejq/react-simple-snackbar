@@ -8,12 +8,12 @@ export default function Footer() {
       <div className="footer-container">
         <p>
           Created by{' '}
-          <a href="https://github.com/evandromacedo" target="blank">
-            Evandro Macedo
+          <a href="https://github.com/codejq" target="blank">
+            codejq
           </a>
           .
         </p>
-        <a href="https://github.com/evandromacedo/react-simple-snackbar" target="blank">
+        <a href="https://github.com/codejq/react-simple-snackbar" target="blank">
           <GitHubIcon />
         </a>
       </div>

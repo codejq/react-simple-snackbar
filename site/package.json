@@ -9,7 +9,7 @@
     "build": "rm -rf dist && parcel build src/index.html --public-url /react-simple-snackbar"
   },
   "keywords": [],
-  "author": "Evandro Macedo <evandro.hcm@gmail.com> (https://github.com/evandromacedo)",
+  "author": "codejq (https://github.com/codejq)",
   "license": "MIT",
   "dependencies": {
     "@mdx-js/react": "^1.5.1",

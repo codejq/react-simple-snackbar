@@ -47,7 +47,7 @@
   </a>
 </p>
 
-> **This is the actively maintained fork** of the original `react-simple-snackbar` by [@evandromacedo](https://github.com/evandromacedo). The original repository is no longer maintained. This fork adds React 16.8–19 support, a modernized UI, new positions, per-call background color, and automated publishing.
+> **This is the actively maintained fork** of the original `react-simple-snackbar`. The original repository is no longer maintained. This fork adds React 16.8–19 support, a modernized UI, new positions, per-call background color, and automated publishing.
 
 ## Live Demo
 

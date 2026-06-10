@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useMemo, useReducer, useRef, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { CSSTransition } from 'react-transition-group'
 import styles from './Snackbar.css'
 
@@ -27,7 +27,7 @@ const initialSnackState = {
   closeCustomStyles: {},
 }
 
-function snackbarReducer(state, action) {
+export function snackbarReducer(state, action) {
   switch (action.type) {
     case 'OPEN':
       return {
@@ -59,6 +59,26 @@ export default function SnackbarProvider({ children }) {
   const closeSnackbar = useCallback(() => {
     setOpen(false)
   }, [])
+
+  useEffect(() => {
+    if (!open) return undefined
+
+    const handleClickAway = (event) => {
+      const snackbarNode = nodeRef.current
+
+      if (!snackbarNode || snackbarNode.contains(event.target)) return
+
+      closeSnackbar()
+    }
+
+    document.addEventListener('mousedown', handleClickAway)
+    document.addEventListener('touchstart', handleClickAway)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickAway)
+      document.removeEventListener('touchstart', handleClickAway)
+    }
+  }, [open, closeSnackbar])
 
   const triggerSnackbar = useCallback((text, duration, position, customStyles, closeCustomStyles) => {
     dispatch({ type: 'OPEN', text, duration, position, customStyles, closeCustomStyles })
@@ -116,10 +136,7 @@ export default function SnackbarProvider({ children }) {
       >
         {/* nodeRef must be on the root DOM element that CSSTransition manages */}
         <div ref={nodeRef}>
-          <div
-            className={styles.snackbar}
-            style={{ '--snackbar-duration': `${snackState.duration}ms`, ...snackState.customStyles }}
-          >
+          <div className={styles.snackbar} style={snackState.customStyles}>
             {/* Snackbar's text */}
             <div className={styles.snackbar__text}>{snackState.text}</div>
 

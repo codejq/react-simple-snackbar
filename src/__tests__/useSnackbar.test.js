@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, screen, fireEvent, act, renderHook } from '@testing-library/react'
 import SnackbarProvider, { useSnackbar } from '..'
-import { defaultPosition, defaultDuration, defaultInterval } from '../Snackbar'
+import { defaultPosition, defaultDuration, defaultInterval, snackbarReducer } from '../Snackbar'
 
 // Exit animation timeout in ms (CSSTransition timeout.exit)
 const EXIT_TIMEOUT = 220
@@ -68,9 +68,7 @@ describe('useSnackbar()', () => {
     )
 
     // No inline styles for snackbar and close button
-    expect(document.querySelector('.snackbar').style.cssText).toBe(
-      `--snackbar-duration: ${defaultDuration}ms;`
-    )
+    expect(document.querySelector('.snackbar').style.cssText).toBe('')
     expect(document.querySelector('.snackbar__close').getAttribute('style')).toBeNull()
 
     // Advance past duration → closeSnackbar fires, React re-renders, exit timer scheduled
@@ -91,6 +89,32 @@ describe('useSnackbar()', () => {
     fireEvent.click(screen.getByTestId('open'))
 
     expect(document.querySelector('.snackbar__text').textContent).toEqual(randomText)
+  })
+
+  it('should open with default arguments', () => {
+    const ComponentWithDefaultOpen = () => {
+      const [open] = useSnackbar()
+      return (
+        <button data-testid="open-default" onClick={() => open()}>
+          Open
+        </button>
+      )
+    }
+    renderWithProvider(<ComponentWithDefaultOpen />)
+
+    fireEvent.click(screen.getByTestId('open-default'))
+
+    expect(document.querySelector('.snackbar__text').textContent).toEqual('')
+
+    act(() => {
+      jest.advanceTimersByTime(defaultDuration + 50)
+    })
+
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+
+    expect(document.querySelector('.snackbar')).toBeNull()
   })
 
   it('should close snackbar after a custom duration', () => {
@@ -208,6 +232,36 @@ describe('useSnackbar()', () => {
     expect(document.querySelector('.snackbar')).toBeNull()
   })
 
+  it('should close snackbar when clicking outside', () => {
+    renderWithProvider(<ComponentMock />)
+
+    fireEvent.click(screen.getByTestId('open'))
+    expect(document.querySelector('.snackbar')).not.toBeNull()
+
+    fireEvent.mouseDown(document.body)
+
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+
+    expect(document.querySelector('.snackbar')).toBeNull()
+  })
+
+  it('should keep snackbar open when clicking inside', () => {
+    renderWithProvider(<ComponentMock />)
+
+    fireEvent.click(screen.getByTestId('open'))
+    const snackbar = document.querySelector('.snackbar')
+
+    fireEvent.mouseDown(snackbar)
+
+    act(() => {
+      jest.advanceTimersByTime(EXIT_TIMEOUT + 50)
+    })
+
+    expect(document.querySelector('.snackbar')).not.toBeNull()
+  })
+
   it('should open and close snackbar after duration ends', () => {
     renderWithProvider(<ComponentMock />)
 
@@ -255,5 +309,17 @@ describe('useSnackbar()', () => {
     })
 
     expect(document.querySelector('.snackbar')).toBeNull()
+  })
+
+  it('should return current snackbar state for unknown reducer actions', () => {
+    const state = {
+      text: 'Current message',
+      duration: 1000,
+      position: 'top-left',
+      customStyles: { color: 'white' },
+      closeCustomStyles: { color: 'black' },
+    }
+
+    expect(snackbarReducer(state, { type: 'UNKNOWN' })).toBe(state)
   })
 })
